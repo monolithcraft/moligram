@@ -77,6 +77,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "mainwidget.h"
 #include "boxes/add_contact_box.h"
+#include "moligram/moligram_settings.h"
 #include "mtproto/mtproto_config.h"
 #include "history/history.h"
 #include "history/history_item_components.h"
@@ -1487,6 +1488,10 @@ void ApiWrap::markContentsRead(
 			markedIds.push_back(MTP_int(item->id));
 		}
 	}
+	if (!Moligram::Enabled(Moligram::Option::SendReadMessages)
+		|| !Moligram::Enabled(Moligram::Option::SendListened)) {
+		return;
+	}
 	if (!markedIds.isEmpty()) {
 		request(MTPmessages_ReadMessageContents(
 			MTP_vector<MTPint>(markedIds)
@@ -1504,6 +1509,9 @@ void ApiWrap::markContentsRead(
 
 void ApiWrap::markContentsRead(not_null<HistoryItem*> item) {
 	if (!item->markContentsRead(true) || !item->isRegular()) {
+		return;
+	} else if (!Moligram::SendsReads(item->history()->peer->id)
+		|| !Moligram::Enabled(Moligram::Option::SendListened)) {
 		return;
 	}
 	const auto ids = MTP_vector<MTPint>(1, MTP_int(item->id));
@@ -3889,6 +3897,9 @@ void ApiWrap::sendAction(const SendAction &action) {
 			topic->readTillEnd();
 		} else if (sublist && sublist->parentChat()) {
 			sublist->readTillEnd();
+		} else if (!Moligram::SendsReads(action.history->peer->id)
+			&& Moligram::Enabled(Moligram::Option::ReadAfterSending)) {
+			_session->data().histories().readInboxOnServer(action.history);
 		} else {
 			_session->data().histories().readInbox(action.history);
 		}

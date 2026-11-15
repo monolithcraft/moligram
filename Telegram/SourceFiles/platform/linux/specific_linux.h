@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include "moligram/moligram_capture.h"
 #include "platform/platform_specific.h"
 
 namespace Platform {
@@ -50,7 +51,7 @@ inline bool WaitForProcessExit(uint64 processId, crl::time timeout) {
 }
 
 inline bool ScreenshotProtectionSupported() {
-	return false;
+	return Moligram::CaptureHidingSupported();
 }
 
 inline bool AmbientScreenshotProtectionSupported() {
@@ -60,6 +61,7 @@ inline bool AmbientScreenshotProtectionSupported() {
 inline void SetWindowScreenshotProtection(
 		not_null<QWidget*> window,
 		bool enabled) {
+	Moligram::SetCaptureHidden(enabled);
 }
 
 } // namespace Platform

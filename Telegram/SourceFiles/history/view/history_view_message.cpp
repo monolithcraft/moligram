@@ -39,6 +39,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "boxes/premium_preview_box.h"
 #include "boxes/share_box.h"
 #include "boxes/peers/tag_info_box.h"
+#include "moligram/moligram_club.h"
+#include "moligram/moligram_history.h"
 #include "ui/chat/torn_edge.h"
 #include "ui/effects/reaction_fly_animation.h"
 #include "ui/effects/ripple_animation.h"
@@ -2034,6 +2036,7 @@ void Message::draw(Painter &p, const PaintContext &context) const {
 					.selection = mediaSelectionIntervals,
 				});
 		}
+		Moligram::PaintMarks(p, simple, data());
 
 		auto inner = g;
 		paintCommentsButton(p, inner, context);
@@ -2679,6 +2682,18 @@ void Message::paintFromName(
 		+ st::msgServiceFont->spacew;
 	availableLeft += skipWidth;
 	availableWidth -= skipWidth;
+	if (Moligram::ShowClubBadge(from)) {
+		const auto size = st::msgNameFont->height - style::ConvertScale(2);
+		if (availableWidth > size) {
+			Moligram::PaintClubBadge(
+				p,
+				availableLeft,
+				trect.top() + (st::msgNameFont->height - size) / 2,
+				size);
+			availableLeft += size + st::msgServiceFont->spacew;
+			availableWidth -= size + st::msgServiceFont->spacew;
+		}
+	}
 
 	if (via && !displayForwardedFrom() && availableWidth > 0) {
 		p.setPen(stm->msgServiceFg);

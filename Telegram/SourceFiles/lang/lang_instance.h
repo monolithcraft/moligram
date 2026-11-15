@@ -123,6 +123,7 @@ private:
 		const QString &relativePath,
 		const QByteArray &content);
 	void updatePluralRules();
+	void applyMoligramValues();
 	void updateChoosingStickerReplacement();
 
 	Instance *_derived = nullptr;

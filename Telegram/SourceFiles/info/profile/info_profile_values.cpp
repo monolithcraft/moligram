@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_values.h"
 
+#include "moligram/moligram_club.h"
 #include "api/api_chat_participants.h"
 #include "apiwrap.h"
 #include "info/profile/info_profile_phone_menu.h"
@@ -49,7 +50,7 @@ auto PlainAboutValue(not_null<PeerData*> peer) {
 		peer,
 		UpdateFlag::About
 	) | rpl::map([=] {
-		return peer->about();
+		return Moligram::StripClubMarker(peer->about());
 	});
 }
 

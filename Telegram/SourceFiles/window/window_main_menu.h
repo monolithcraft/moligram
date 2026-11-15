@@ -14,6 +14,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/unread_badge.h"
 #include "ui/controls/swipe_handler_data.h"
 #include "ui/layers/layer_widget.h"
+#include "ui/effects/animations.h"
+#include "moligram/moligram_cover.h"
 
 namespace base {
 enum class EventFilterResult;
@@ -112,6 +114,8 @@ private:
 
 	Ui::Controls::SwipeBackResult _swipeBackData;
 
+	Moligram::Cover _cover;
+	Ui::Animations::Simple _coverReveal;
 	rpl::variable<bool> _showFinished = false;
 	bool _insideEventRedirect = false;
 	bool _emojiStatusDismissSetup = false;

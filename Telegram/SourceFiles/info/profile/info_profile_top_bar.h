@@ -28,6 +28,10 @@ namespace Info::Profile {
 class TopicIconView;
 } // namespace Info::Profile
 
+namespace Moligram {
+class ClubBackdrop;
+} // namespace Moligram
+
 namespace Lottie {
 class Animation;
 class MultiPlayer;
@@ -329,6 +333,7 @@ private:
 	rpl::variable<std::optional<QColor>> _edgeColor;
 	bool _hasGradientBg = false;
 	std::optional<QColor> _solidBg;
+	std::unique_ptr<Moligram::ClubBackdrop> _club;
 	QImage _cachedGradient;
 	QPainterPath _cachedClipPath;
 	std::unique_ptr<Ui::Text::CustomEmoji> _patternEmoji;

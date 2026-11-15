@@ -16,6 +16,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session_settings.h"
 #include "main/main_app_config.h"
 #include "main/session/send_as_peers.h"
+#include "moligram/moligram_alerts.h"
+#include "moligram/moligram_club.h"
+#include "moligram/moligram_history.h"
 #include "mtproto/mtproto_config.h"
 #include "chat_helpers/stickers_emoji_pack.h"
 #include "chat_helpers/stickers_dice_pack.h"
@@ -190,6 +193,9 @@ Session::Session(
 
 	_api->requestTermsUpdate();
 	_api->requestFullPeer(_user);
+	Moligram::WatchOnlineAlerts(this);
+	Moligram::AttachArchive(this);
+	Moligram::AttachClub(this);
 
 	_api->instance().setUserPhone(_user->phone());
 

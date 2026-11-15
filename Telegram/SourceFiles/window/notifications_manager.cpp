@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/options.h"
 #include "base/platform/base_platform_info.h"
 #include "base/qt/qt_key_modifiers.h"
+#include "moligram/moligram_settings.h"
 #include "platform/platform_notifications_manager.h"
 #include "window/notifications_manager_default.h"
 #include "media/audio/media_audio_track.h"
@@ -445,7 +446,8 @@ void System::schedule(Data::ItemNotification notification) {
 	const auto type = notification.type;
 	const auto thread = item->notificationThread();
 	const auto skip = skipNotification(notification);
-	if (skip.value == SkipState::Skip) {
+	if (skip.value == SkipState::Skip
+		|| Moligram::Enabled(Moligram::Option::DoNotDisturb)) {
 		thread->popNotification(notification);
 		return;
 	}
@@ -1191,7 +1193,8 @@ Manager::DisplayOptions Manager::getNotificationOptions(
 		HistoryItem *item,
 		Data::ItemNotificationType type) const {
 	const auto hideEverything = Core::App().passcodeLocked()
-		|| forceHideDetails();
+		|| forceHideDetails()
+		|| Moligram::Enabled(Moligram::Option::StreamerMode);
 	const auto view = Core::App().settings().notifyView();
 	const auto peer = item ? item->history()->peer.get() : nullptr;
 	const auto topic = item ? item->topic() : nullptr;

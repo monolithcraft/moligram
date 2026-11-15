@@ -6,6 +6,10 @@
     <file alias="art/business_logo.png">../../art/business_logo.png</file>
     <file alias="art/affiliate_logo.png">../../art/affiliate_logo.png</file>
     <file alias="art/logo_256.png">../../art/logo_256.png</file>
+    <file alias="art/moligram_mark.png">../../art/moligram_mark.png</file>
+    <file alias="langs/moligram_ru.strings">../../langs/moligram_ru.strings</file>
+    <file alias="fonts/Nunito.ttf">../../fonts/Nunito.ttf</file>
+    <file alias="fonts/Nunito-Italic.ttf">../../fonts/Nunito-Italic.ttf</file>
     <file alias="art/logo_256_no_margin.png">../../art/logo_256_no_margin.png</file>
     <file alias="art/themeimage.jpg">../../art/themeimage.jpg</file>
     <file alias="art/round_placeholder.jpg">../../art/round_placeholder.jpg</file>
@@ -24,6 +28,7 @@
     <file alias="art/premium/diamond/widths.bin">../../art/premium/diamond/widths.bin</file>
     <file alias="day-blue.tdesktop-theme">../../day-blue.tdesktop-theme</file>
     <file alias="night.tdesktop-theme">../../night.tdesktop-theme</file>
+    <file alias="moligram.tdesktop-theme">../../moligram.tdesktop-theme</file>
     <file alias="night-green.tdesktop-theme">../../night-green.tdesktop-theme</file>
     <file alias="day-custom-base.tdesktop-theme">../../day-custom-base.tdesktop-theme</file>
     <file alias="night-custom-base.tdesktop-theme">../../night-custom-base.tdesktop-theme</file>
@@ -98,6 +103,6 @@
   </qresource>
   <qresource prefix="/misc">
     <file alias="default_shortcuts-custom.json">../../default_shortcuts-custom.json</file>
-    <file alias="org.telegram.desktop.desktop">../../../../lib/xdg/org.telegram.desktop.desktop</file>
+    <file alias="io.github.monolithcraft.Moligram.desktop">../../../../lib/xdg/io.github.monolithcraft.Moligram.desktop</file>
   </qresource>
 </RCC>

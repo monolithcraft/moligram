@@ -40,6 +40,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_view_pull_to_next_channel.h"
 #include "iv/iv_rich_message_serializer.h"
 #include "iv/iv_rich_page.h"
+#include "moligram/moligram_menu.h"
 #include "ui/chat/choose_theme_controller.h"
 #include "ui/chat/pinned_bar.h"
 #include "ui/chat/chat_style.h"
@@ -3282,6 +3283,16 @@ bool ChatWidget::sendExistingDocument(
 	}
 
 	const auto options = messageToSend.action.options;
+	const auto confirmed = Moligram::ConfirmDocumentSending(
+		controller()->uiShow(),
+		document,
+		[=] {
+			auto copy = messageToSend;
+			Api::SendExistingDocument(std::move(copy), document, localId);
+		});
+	if (confirmed) {
+		return true;
+	}
 	Api::SendExistingDocument(
 		std::move(messageToSend),
 		document,

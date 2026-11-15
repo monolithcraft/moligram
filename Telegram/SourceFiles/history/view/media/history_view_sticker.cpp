@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/media/history_view_sticker.h"
 
+#include "moligram/moligram_settings.h"
+
 #include "base/options.h"
 #include "boxes/sticker_set_box.h"
 #include "history/history.h"
@@ -199,6 +201,13 @@ bool Sticker::readyToDrawAnimationFrame() {
 
 QSize Sticker::Size() {
 	const auto side = std::min(st::maxStickerSize, kMaxSizeFixed);
+	if (const auto custom = Moligram::StickerSize(); custom > 0) {
+		const auto scaled = std::clamp(
+			style::ConvertScale(custom),
+			style::ConvertScale(50),
+			style::ConvertScale(kMaxSizeFixed));
+		return { scaled, scaled };
+	}
 	if (OptionStickerSize.value() > 0) [[unlikely]] {
 		const auto scaled = std::clamp(
 			style::ConvertScale(OptionStickerSize.value()),

@@ -77,6 +77,10 @@ namespace Window {
 class SessionController;
 } // namespace Window
 
+namespace Moligram {
+class MessageAppear;
+} // namespace Moligram
+
 namespace Ui {
 class ChatTheme;
 class ChatStyle;
@@ -663,6 +667,7 @@ private:
 		std::unique_ptr<VideoUserpic>> _videoUserpics;
 
 	std::unique_ptr<HistoryView::Reactions::Manager> _reactionsManager;
+	std::unique_ptr<Moligram::MessageAppear> _appear;
 	rpl::variable<HistoryItem*> _reactionsItem;
 	std::unique_ptr<HistoryView::ReplyButton::Manager> _replyButtonManager;
 	HistoryItem *_pinnedItem = nullptr;

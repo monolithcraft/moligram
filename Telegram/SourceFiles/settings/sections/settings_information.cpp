@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "settings/sections/settings_information.h"
 
+#include "moligram/moligram_club.h"
 #include "settings/sections/settings_main.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common_session.h"
@@ -675,7 +676,9 @@ void SetupBio(
 		return result;
 	};
 	const auto style = Ui::AttachAsChild(container, bioStyle());
-	const auto current = Ui::AttachAsChild(container, self->about());
+	const auto current = Ui::AttachAsChild(
+		container,
+		Moligram::StripClubMarker(self->about()));
 	const auto changed = Ui::CreateChild<rpl::event_stream<bool>>(
 		container.get());
 	const auto bio = container->add(

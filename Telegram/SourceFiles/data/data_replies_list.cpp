@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item.h"
 #include "history/history_item_helpers.h"
 #include "main/main_session.h"
+#include "moligram/moligram_settings.h"
 #include "data/data_histories.h"
 #include "data/data_session.h"
 #include "data/data_changes.h"
@@ -967,6 +968,9 @@ void RepliesList::readTill(
 void RepliesList::sendReadTillRequest() {
 	if (_readRequestTimer.isActive()) {
 		_readRequestTimer.cancel();
+	}
+	if (!Moligram::SendsReads(_history->peer->id)) {
+		return;
 	}
 	const auto api = &_history->session().api();
 	api->request(base::take(_readRequestId)).cancel();

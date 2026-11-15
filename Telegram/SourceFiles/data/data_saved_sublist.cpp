@@ -25,6 +25,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item.h"
 #include "history/history_unread_things.h"
 #include "main/main_session.h"
+#include "moligram/moligram_settings.h"
 #include "window/notifications_manager.h"
 
 namespace Data {
@@ -652,6 +653,9 @@ void SavedSublist::sendReadTillRequest() {
 	}
 	if (_readRequestTimer.isActive()) {
 		_readRequestTimer.cancel();
+	}
+	if (!Moligram::SendsReads(parentChat->id)) {
+		return;
 	}
 	const auto api = &_parent->session().api();
 	api->request(base::take(_readRequestId)).cancel();

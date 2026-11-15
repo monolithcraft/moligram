@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "main/main_account.h"
 #include "main/main_app_config.h"
+#include "moligram/moligram_settings.h"
 #include "mtproto/mtp_instance.h"
 #include "mtproto/mtproto_config.h"
 #include "mtproto/mtproto_dc_options.h"
@@ -244,6 +245,19 @@ Updates::Updates(not_null<Main::Session*> session)
 , _failDifferenceTimer([=] { getDifferenceAfterFail(); })
 , _idleFinishTimer([=] { checkIdleFinish(); }) {
 	_ptsWaiter.setRequesting(true);
+
+	_ghostOfflineTimer.setCallback([=] {
+		if (!Moligram::Enabled(Moligram::Option::SendOnlineStatus)
+			&& !Core::Quitting()) {
+			api().request(MTPaccount_UpdateStatus(MTP_bool(true))).send();
+		}
+	});
+	Moligram::Value(
+		Moligram::Option::SendOnlineStatus
+	) | rpl::skip(1) | rpl::on_next([=] {
+		_offlineSent = false;
+		updateOnline();
+	}, _lifetime);
 
 	session->account().mtpUpdates(
 	) | rpl::on_next([=](const MTPUpdates &updates) {
@@ -1001,7 +1015,8 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 	});
 
 	const auto &config = _session->serverConfig();
-	bool isOnline = Core::App().hasActiveWindow(&session());
+	bool isOnline = Core::App().hasActiveWindow(&session())
+		&& Moligram::Enabled(Moligram::Option::SendOnlineStatus);
 	int updateIn = config.onlineUpdatePeriod;
 	Assert(updateIn >= 0);
 	if (isOnline) {
@@ -1020,11 +1035,15 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 		}
 	}
 	auto ms = crl::now();
+	const auto ghost = !Moligram::Enabled(
+		Moligram::Option::SendOnlineStatus);
 	if (isOnline != _lastWasOnline
+		|| (ghost && !_offlineSent)
 		|| (isOnline && _lastSetOnline + config.onlineUpdatePeriod <= ms)
 		|| (isOnline && gotOtherOffline)) {
 		api().request(base::take(_onlineRequest)).cancel();
 
+		_offlineSent = ghost;
 		_lastWasOnline = isOnline;
 		_lastSetOnline = ms;
 		if (!Core::Quitting()) {
@@ -1685,6 +1704,9 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 	} break;
 
 	case mtpc_updateMessageID: {
+		if (!Moligram::Enabled(Moligram::Option::SendOnlineStatus)) {
+			_ghostOfflineTimer.callOnce(300);
+		}
 		const auto &d = update.c_updateMessageID();
 		const auto randomId = d.vrandom_id().v;
 		if (const auto id = session().data().messageIdByRandomId(randomId)) {

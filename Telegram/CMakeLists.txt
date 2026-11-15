@@ -1722,6 +1722,36 @@ PRIVATE
     menu/menu_sponsored.h
     menu/menu_ttl_validator.cpp
     menu/menu_ttl_validator.h
+    moligram/moligram_alerts.cpp
+    moligram/moligram_alerts.h
+    moligram/moligram_capture.cpp
+    moligram/moligram_capture.h
+    moligram/moligram_cover.cpp
+    moligram/moligram_cover.h
+    moligram/moligram_history.cpp
+    moligram/moligram_history.h
+    moligram/moligram_log.cpp
+    moligram/moligram_log.h
+    moligram/moligram_menu.cpp
+    moligram/moligram_menu.h
+    moligram/moligram_palette.cpp
+    moligram/moligram_palette.h
+    moligram/moligram_card.cpp
+    moligram/moligram_card.h
+    moligram/moligram_motion.cpp
+    moligram/moligram_motion.h
+    moligram/moligram_club.cpp
+    moligram/moligram_club.h
+    moligram/moligram_privacy.cpp
+    moligram/moligram_privacy.h
+    moligram/moligram_people.cpp
+    moligram/moligram_people.h
+    moligram/moligram_hover.cpp
+    moligram/moligram_hover.h
+    moligram/moligram_quick_panel.cpp
+    moligram/moligram_quick_panel.h
+    moligram/moligram_settings.cpp
+    moligram/moligram_settings.h
     mtproto/config_loader.cpp
     mtproto/config_loader.h
     mtproto/connection_abstract.cpp
@@ -2000,6 +2030,8 @@ PRIVATE
     settings/settings_faq_suggestions.h
     settings/settings_builder.cpp
     settings/settings_builder.h
+    settings/sections/settings_moligram.cpp
+    settings/sections/settings_moligram.h
     settings/sections/settings_notifications.cpp
     settings/sections/settings_notifications.h
     settings/sections/settings_privacy_security.cpp
@@ -2861,6 +2893,9 @@ else()
     endif()
     set(bundle_entitlements "Telegram.entitlements")
     set(output_name "Telegram")
+    if (LINUX)
+        set(output_name "Moligram")
+    endif()
 endif()
 
 if (CMAKE_GENERATOR STREQUAL Xcode)

@@ -59,6 +59,8 @@ public:
 	void clearAll();
 
 	void readInbox(not_null<History*> history);
+	void readInboxOnServer(not_null<History*> history);
+	void readInboxTillOnServer(not_null<History*> history, MsgId tillId);
 	void readInboxTill(not_null<HistoryItem*> item);
 	void readInboxTill(not_null<History*> history, MsgId tillId);
 	void readInboxOnNewMessage(not_null<HistoryItem*> item);

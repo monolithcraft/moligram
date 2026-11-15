@@ -107,6 +107,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_info_profile_top_bar.h"
 #include "styles/style_layers.h"
 #include "styles/style_menu_icons.h"
+#include "moligram/moligram_club.h"
 
 #include <QtGui/QClipboard>
 #include <QtGui/QGuiApplication>
@@ -625,6 +626,12 @@ TopBar::TopBar(
 		}
 	}, lifetime());
 
+	if (const auto user = _topic ? nullptr : _peer->asUser()) {
+		_club = std::make_unique<Moligram::ClubBackdrop>(user, [=] {
+			updateCollectibleStatus();
+		});
+	}
+
 	std::move(
 		descriptor.showFinished
 	) | rpl::take(1) | rpl::on_next([=] {
@@ -861,7 +868,9 @@ void TopBar::updateCollectibleStatus() {
 		_verifiedSt = nullptr;
 	}
 	update();
-	adjustColors(collectible
+	adjustColors((_club && _club->active() && _club->edgeColor().isValid())
+		? std::optional<QColor>(_club->edgeColor())
+		: collectible
 		? std::optional<QColor>(collectible->edgeColor)
 		: (colorProfile && !colorProfile->bg.empty())
 		? std::optional<QColor>(colorProfile->bg.front())
@@ -2900,7 +2909,24 @@ void TopBar::paintEvent(QPaintEvent *e) {
 				offset);
 		}
 	}
-	if (!_hasGradientBg) {
+	if (_club && _club->active()) {
+		if (clipTouchesRoundedCorners(clipBounds)) {
+			if (_cachedClipPath.isEmpty()) {
+				const auto radius = st::boxRadius;
+				_cachedClipPath.addRoundedRect(
+					rect() + QMargins{ 0, 0, 0, radius + 1 },
+					radius,
+					radius);
+			}
+			auto hq = PainterHighQualityEnabler(p);
+			p.save();
+			p.setClipPath(_cachedClipPath);
+			_club->paint(p, QSize(width(), maximumHeight()), rect());
+			p.restore();
+		} else {
+			_club->paint(p, QSize(width(), maximumHeight()), rect());
+		}
+	} else if (!_hasGradientBg) {
 		paintEdges(p, clipBounds);
 	} else {
 		const auto x = (width()
@@ -2927,6 +2953,10 @@ void TopBar::paintEvent(QPaintEvent *e) {
 	}
 	if (_patternEmoji && _patternEmoji->ready()) {
 		paintAnimatedPattern(p, clipBounds, geometry);
+	}
+
+	if (_club && _club->active()) {
+		_club->paintGlow(p, geometry);
 	}
 
 	if (clipBounds.bottom() >= geometry.top()

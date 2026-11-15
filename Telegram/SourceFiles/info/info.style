@@ -574,6 +574,7 @@ infoIconDeleteRed: icon {{ "info/info_delete", attentionButtonFg }};
 infoIconReport: icon {{ "info/info_report", attentionButtonFg }};
 infoIconBlock: icon {{ "info/info_block", attentionButtonFg }};
 infoIconMembers: icon {{ "info/info_members", infoIconFg }};
+infoIconOnlineAlert: icon {{ "menu/info_notifications", infoIconFg, point(4px, 4px) }};
 infoSharedMediaButtonIconPosition: point(20px, 3px);
 infoGroupMembersIconPosition: point(20px, 10px);
 
@@ -1373,3 +1374,17 @@ peerQrEmojiStripSkip: 34px;
 peerQrEmojiStripSize: 26px;
 peerQrEmojiStripPadding: 9px;
 peerQrEmojiStripBottom: 18px;
+infoIconLocalName: icon {{ "menu/edit", infoIconFg, point(4px, 4px) }};
+moligramField: InputField(dialogsFilter) {
+	textMargins: margins(14px, 12px, 14px, 10px);
+	placeholderMargins: margins(2px, 0px, 2px, 0px);
+	borderFgActive: activeLineFg;
+	border: 2px;
+	borderActive: 2px;
+	borderRadius: 12px;
+	borderDenominator: 1;
+	heightMin: 44px;
+	heightMax: 160px;
+}
+moligramFieldSkip: 10px;
+moligramLocalUserpic: 72px;

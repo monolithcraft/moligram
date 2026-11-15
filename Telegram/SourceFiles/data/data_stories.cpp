@@ -24,6 +24,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "main/main_app_config.h"
 #include "main/main_session.h"
+#include "moligram/moligram_settings.h"
 #include "ui/layers/show.h"
 #include "ui/text/text_utilities.h"
 
@@ -1390,6 +1391,10 @@ void Stories::toggleHidden(
 void Stories::sendMarkAsReadRequest(
 		not_null<PeerData*> peer,
 		StoryId tillId) {
+	if (!Moligram::Enabled(Moligram::Option::SendReadStories)) {
+		checkQuitPreventFinished();
+		return;
+	}
 	const auto peerId = peer->id;
 	_markReadRequests.emplace(peerId);
 	const auto finish = [=] {
@@ -1435,6 +1440,10 @@ void Stories::sendMarkAsReadRequests() {
 
 void Stories::sendIncrementViewsRequests() {
 	if (_incrementViewsPending.empty()) {
+		return;
+	} else if (!Moligram::Enabled(Moligram::Option::SendReadStories)) {
+		_incrementViewsPending.clear();
+		checkQuitPreventFinished();
 		return;
 	}
 	struct Prepared {

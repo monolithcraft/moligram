@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "core/application.h"
 
+#include "ui/chat/chat_style_radius.h"
+
 #include "data/data_abstract_structure.h"
 #include "data/data_channel.h"
 #include "data/data_forum.h"
@@ -38,6 +40,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/platform/base_platform_last_input.h"
 #include "base/platform/base_platform_info.h"
 #include "base/platform/base_platform_process.h"
+#include "moligram/moligram_capture.h"
+#include "moligram/moligram_motion.h"
+#include "moligram/moligram_privacy.h"
+#include "moligram/moligram_settings.h"
 #include "platform/platform_specific.h"
 #include "platform/platform_integration.h"
 #include "history/history.h"
@@ -316,8 +322,12 @@ void Application::run() {
 	_notifications = std::make_unique<Window::Notifications::System>();
 
 	startLocalStorage();
+	Moligram::Load();
+	Moligram::StartCaptureGuard();
+	Moligram::StartPrivacyGuard();
+	Ui::SetBubbleRadiusOverride(Moligram::BubbleRadius());
 
-	style::SetCustomFont(settings().customFontFamily());
+	style::SetCustomFont(Moligram::InterfaceFont(settings().customFontFamily()));
 	style::internal::StartFonts();
 
 	Test::ApplyStartupOverrides();
@@ -345,6 +355,7 @@ void Application::run() {
 	QCoreApplication::instance()->installTranslator(_translator.get());
 
 	style::StartManager(cScale());
+	Moligram::ApplyLayoutTweaks();
 	Ui::Accessible::Init();
 	Ui::InitTextOptions();
 	Ui::StartCachedCorners();

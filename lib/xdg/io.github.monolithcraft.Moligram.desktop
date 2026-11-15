@@ -1,0 +1,21 @@
+[Desktop Entry]
+Name=Moligram
+Comment=Telegram client with Ghost Mode and message history
+TryExec=Moligram
+Exec=Moligram -- %U
+Icon=io.github.monolithcraft.Moligram
+Terminal=false
+StartupWMClass=Moligram
+Type=Application
+Categories=Chat;Network;InstantMessaging;Qt;
+MimeType=x-scheme-handler/tg;x-scheme-handler/tonsite;x-scheme-handler/ton;
+Keywords=tg;telegram;chat;im;messaging;messenger;moligram;
+Actions=quit;
+SingleMainWindow=true
+X-GNOME-UsesNotifications=true
+X-GNOME-SingleWindow=true
+
+[Desktop Action quit]
+Exec=Moligram -quit
+Name=Quit Moligram
+Icon=application-exit

@@ -26,6 +26,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/unixtime.h"
 #include "base/random.h"
 #include "main/main_session.h"
+#include "moligram/moligram_settings.h"
 #include "window/notifications_manager.h"
 #include "history/history.h"
 #include "history/history_item.h"
@@ -183,6 +184,22 @@ void Histories::clearAll() {
 	_map.clear();
 }
 
+void Histories::readInboxOnServer(not_null<History*> history) {
+	const auto last = history->lastServerMessage();
+	const auto tillId = last ? last->id : history->maxMsgId();
+	if (IsServerMsgId(tillId)) {
+		readInboxTill(history, tillId, true);
+	}
+}
+
+void Histories::readInboxTillOnServer(
+		not_null<History*> history,
+		MsgId tillId) {
+	if (IsServerMsgId(tillId)) {
+		readInboxTill(history, tillId, true);
+	}
+}
+
 void Histories::readInbox(not_null<History*> history) {
 	DEBUG_LOG(("Reading: readInbox called."));
 	if (history->lastServerMessageKnown()) {
@@ -319,6 +336,12 @@ void Histories::readInboxTill(
 		DEBUG_LOG(("Reading: count didn't change so just update till %1"
 			).arg(tillId.bare));
 		history->setInboxReadTill(tillId);
+		return;
+	}
+	if (!force && !Moligram::SendsReads(history->peer->id)) {
+		history->setInboxReadTill(tillId);
+		history->setUnreadCount(stillUnread.value_or(0));
+		history->updateChatListEntry();
 		return;
 	}
 	auto &state = maybeState ? *maybeState : _states[history];

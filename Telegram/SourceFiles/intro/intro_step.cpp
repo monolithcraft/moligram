@@ -26,6 +26,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_peer_photo.h"
 #include "mainwindow.h"
 #include "ui/boxes/confirm_box.h"
+#include "ui/painter.h"
 #include "ui/text/text_utilities.h"
 #include "ui/widgets/labels.h"
 #include "ui/wrap/fade_wrap.h"
@@ -445,37 +446,18 @@ void Step::paintCover(QPainter &p, int top) {
 				coverHeight * style::DevicePixelRatio()));
 	}
 
-	auto left = 0;
-	auto right = 0;
-	if (width() < st::introCoverMaxWidth) {
-		auto iconsMaxSkip = st::introCoverMaxWidth - st::introCoverLeft.width() - st::introCoverRight.width();
-		auto iconsSkip = st::introCoverIconsMinSkip + (iconsMaxSkip - st::introCoverIconsMinSkip) * (width() - st::introStepWidth) / (st::introCoverMaxWidth - st::introStepWidth);
-		auto outside = iconsSkip + st::introCoverLeft.width() + st::introCoverRight.width() - width();
-		left = -outside / 2;
-		right = -outside - left;
+	static const auto mark = QImage(u":/gui/art/moligram_mark.png"_q);
+	const auto side = st::introCoverHeight - st::introCoverIconTop * 2;
+	if (side <= 0 || mark.isNull()) {
+		return;
 	}
-	if (top < 0) {
-		auto shown = float64(coverHeight) / st::introCoverHeight;
-		const auto leftFull = left + st::introCoverLeft.width();
-		auto leftShown = int(base::SafeRound(shown * leftFull));
-		left = leftShown - st::introCoverLeft.width();
-		const auto rightFull = right + st::introCoverRight.width();
-		auto rightShown = int(base::SafeRound(shown * rightFull));
-		right = rightShown - st::introCoverRight.width();
-	}
-	st::introCoverLeft.paint(p, left, coverHeight - st::introCoverLeft.height(), width());
-	st::introCoverRight.paint(p, width() - right - st::introCoverRight.width(), coverHeight - st::introCoverRight.height(), width());
-
-	auto planeLeft = (width() - st::introCoverIcon.width()) / 2 - st::introCoverIconLeft;
-	auto planeTop = top + st::introCoverIconTop;
-	if (top < 0 && !_hasCover) {
-		const auto ratio = float64(st::introPlaneWidth / st::introPlaneHeight);
-		auto deltaLeft = -int(base::SafeRound(ratio * top));
-//		auto deltaTop = top;
-		planeLeft += deltaLeft;
-	//	planeTop += top;
-	}
-	st::introCoverIcon.paint(p, planeLeft, planeTop, width());
+	const auto markRect = QRect(
+		(width() - side) / 2,
+		top + (st::introCoverHeight - side) / 2,
+		side,
+		side);
+	auto hq = PainterHighQualityEnabler(p);
+	p.drawImage(markRect, mark);
 }
 
 int Step::contentLeft() const {

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/data_user.h"
 
+#include "moligram/moligram_settings.h"
+
 #include "api/api_credits.h"
 #include "api/api_global_privacy.h"
 #include "api/api_sensitive_content.h"
@@ -421,7 +423,12 @@ void UserData::setName(
 			lastName = newLastName;
 		}
 	}
-	const auto newFullName = langFullName(firstName, lastName);
+	const auto nickname = Moligram::PeerTextValue(
+		Moligram::PeerText::Nickname,
+		id);
+	const auto newFullName = nickname.isEmpty()
+		? langFullName(firstName, lastName)
+		: nickname;
 	updateNameDelayed(newFullName, newPhoneName, newUsername);
 }
 

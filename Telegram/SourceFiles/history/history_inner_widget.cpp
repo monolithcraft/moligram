@@ -43,6 +43,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_inner_widget_accessibility.h"
 #include "history/history_item_components.h"
 #include "history/history_item_text.h"
+#include "moligram/moligram_menu.h"
+#include "moligram/moligram_motion.h"
+#include "moligram/moligram_hover.h"
 #include "payments/payments_reaction_process.h"
 #include "tgw/tgw_log_box.h"
 #include "tgw/tgw_scroll.h"
@@ -397,6 +400,7 @@ HistoryInner::HistoryInner(
 	std::make_unique<HistoryView::Reactions::Manager>(
 		this,
 		[=](QRect updated) { update(updated); }))
+, _appear(std::make_unique<Moligram::MessageAppear>([=] { update(); }))
 , _replyButtonManager(
 	std::make_unique<HistoryView::ReplyButton::Manager>(
 		[=](QRect updated) { update(updated); }))
@@ -1713,7 +1717,18 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
 				context.fullMessageSelected = selection.fullMessageSelected;
 				context.messageSelection = selection.messageSelection;
 				context.highlight = _widget->itemHighlight(item);
-				view->draw(p, context);
+				const auto appear = _appear->progress(item);
+				if (appear < 1.) {
+					p.save();
+					p.setOpacity(appear);
+					p.translate(
+						0,
+						(1. - appear) * Moligram::MessageAppear::Shift());
+					view->draw(p, context);
+					p.restore();
+				} else {
+					view->draw(p, context);
+				}
 				processPainted(view, top, height);
 			}
 			top += height;
@@ -3242,6 +3257,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				Element::Moused())
 		) != HistoryView::PointState::GroupPart);
 	const auto addSelectMessageAction = [&](not_null<HistoryItem*> item) {
+		Moligram::AddMessageMenuActions(_menu, item, controller);
 		if (item->canBeSelected() && !hasSelectRestriction()) {
 			const auto itemId = item->fullId();
 			_menu->addAction(tr::lng_context_select_msg(tr::now), [=] {
@@ -4911,6 +4927,7 @@ void HistoryInner::enterEventHook(QEnterEvent *e) {
 }
 
 void HistoryInner::leaveEventHook(QEvent *e) {
+	Moligram::HoverUserpic(_controller, nullptr, QRect());
 	_reactionsManager->updateButton({ .cursorLeft = true });
 	_replyButtonManager->updateButton({});
 	if (auto item = Element::Hovered()) {
@@ -5565,6 +5582,8 @@ void HistoryInner::mouseActionUpdate() {
 	TextState dragState;
 	auto lnkhost = (ClickHandlerHost*)nullptr;
 	auto dragStateUserpic = false;
+	PeerData *hoverPeer = nullptr;
+	auto hoverRect = QRect();
 	auto selectingText = (item == _mouseActionItem)
 		&& (view == Element::Hovered())
 		&& (_selectedTextItem == item)
@@ -5722,6 +5741,10 @@ void HistoryInner::mouseActionUpdate() {
 							dragState = TextState(nullptr, view->fromPhotoLink());
 							dragState.cursor = CursorState::FromPhoto;
 							dragStateUserpic = true;
+							hoverPeer = view->data()->displayFrom();
+							hoverRect = QRect(
+								mapToGlobal(QPoint(st::historyPhotoLeft, userpicTop)),
+								QSize(st::msgPhotoSize, st::msgPhotoSize));
 							_dragStateItem = nullptr;
 							lnkhost = view;
 							return false;
@@ -5734,6 +5757,7 @@ void HistoryInner::mouseActionUpdate() {
 	}
 	auto lnkChanged = ClickHandler::setActive(dragState.link, lnkhost);
 	_dragStateUserpic = dragStateUserpic;
+	Moligram::HoverUserpic(_controller, hoverPeer, hoverRect);
 	if (lnkChanged || dragState.cursor != _mouseCursorState) {
 		Ui::Tooltip::Hide();
 	}

@@ -20,6 +20,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/application.h"
 #include "core/core_settings.h"
 #include "core/mime_type.h" // Core::IsMimeSticker
+#include "moligram/moligram_history.h"
 #include "ui/image/image_location_factory.h" // Images::FromPhotoSize
 #include "ui/text/format_values.h" // Ui::FormatPhone
 #include "ui/color_int_conversion.h"
@@ -3387,6 +3388,7 @@ void Session::processMessagesDeleted(
 			affected->unknownMessageDeleted(messageId.v);
 		}
 	}
+	keepDeletedItems(toDestroy);
 	if (!toDestroy.empty()) {
 		notifyItemsAboutToBeDestroyed(toDestroy);
 		for (const auto &item : toDestroy) {
@@ -3411,6 +3413,7 @@ void Session::processNonChannelMessagesDeleted(const QVector<MTPint> &data) {
 			historiesToCheck.emplace(history);
 		}
 	}
+	keepDeletedItems(toDestroy);
 	if (!toDestroy.empty()) {
 		notifyItemsAboutToBeDestroyed(toDestroy);
 		for (const auto &item : toDestroy) {
@@ -3422,6 +3425,19 @@ void Session::processNonChannelMessagesDeleted(const QVector<MTPint> &data) {
 			history->requestChatListMessage();
 		}
 	}
+}
+
+void Session::keepDeletedItems(
+		std::vector<not_null<HistoryItem*>> &items) {
+	const auto kept = ranges::remove_if(items, [](
+			not_null<HistoryItem*> item) {
+		if (!Moligram::KeepDeleted(item)) {
+			return false;
+		}
+		Moligram::MarkDeleted(item);
+		return true;
+	});
+	items.erase(kept, end(items));
 }
 
 void Session::removeDependencyMessage(not_null<HistoryItem*> item) {

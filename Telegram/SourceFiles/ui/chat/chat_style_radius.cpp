@@ -24,7 +24,13 @@ base::options::toggle UseSmallMsgBubbleRadius({
 	.restartRequired = true,
 });
 
+int RadiusOverride = -1;
+
 } // namespace
+
+void SetBubbleRadiusOverride(int radius) {
+	RadiusOverride = radius;
+}
 
 const char kOptionUseSmallMsgBubbleRadius[] = "use-small-msg-bubble-radius";
 
@@ -34,7 +40,11 @@ int BubbleRadiusSmall() {
 
 int BubbleRadiusLarge() {
 	static const auto result = [] {
-		if (UseSmallMsgBubbleRadius.value()) {
+		if (RadiusOverride >= 0) {
+			return std::max(
+				style::ConvertScale(RadiusOverride),
+				st::bubbleRadiusSmall);
+		} else if (UseSmallMsgBubbleRadius.value()) {
 			return st::bubbleRadiusSmall;
 		} else {
 			return st::bubbleRadiusLarge;

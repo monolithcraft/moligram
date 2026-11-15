@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/update_checker.h"
 #include "core/version.h"
 #include "lang/lang_keys.h"
+#include "moligram/moligram_settings.h"
 #include "ui/boxes/confirm_box.h"
 #include "ui/painter.h"
 #include "ui/rect.h"
@@ -51,7 +52,7 @@ rpl::producer<TextWithEntities> Text2() {
 		lt_github_link,
 		rpl::single(tr::link(
 			"GitHub",
-			"https://github.com/telegramdesktop/tdesktop")),
+			"https://github.com/monolithcraft/moligram")),
 		tr::marked);
 }
 
@@ -62,10 +63,43 @@ rpl::producer<TextWithEntities> Text3() {
 		tr::marked);
 }
 
+void AddLogo(not_null<Ui::VerticalLayout*> layout) {
+	const auto side = st::aboutLogoSize;
+	const auto logo = layout->add(
+		object_ptr<Ui::FixedHeightWidget>(layout, side + st::aboutLogoGlow * 2));
+	const auto image = [&] {
+		const auto ratio = style::DevicePixelRatio();
+		auto result = QImage(u":/gui/art/logo_256_no_margin.png"_q).scaled(
+			QSize(side, side) * ratio,
+			Qt::IgnoreAspectRatio,
+			Qt::SmoothTransformation);
+		result.setDevicePixelRatio(ratio);
+		return result;
+	}();
+	logo->paintRequest(
+	) | rpl::on_next([=] {
+		auto p = QPainter(logo);
+		auto hq = PainterHighQualityEnabler(p);
+		const auto center = QPointF(logo->width() / 2., logo->height() / 2.);
+		auto glow = QRadialGradient(center, side / 2. + st::aboutLogoGlow);
+		auto accent = st::windowBgActive->c;
+		accent.setAlphaF(0.45);
+		glow.setColorAt(side / (side + 2. * st::aboutLogoGlow), accent);
+		accent.setAlphaF(0.);
+		glow.setColorAt(1., accent);
+		p.setPen(Qt::NoPen);
+		p.setBrush(glow);
+		p.drawEllipse(center, side / 2. + st::aboutLogoGlow, side / 2. + st::aboutLogoGlow);
+		p.drawImage(
+			QPointF(center.x() - side / 2., center.y() - side / 2.),
+			image);
+	}, logo->lifetime());
+}
+
 } // namespace
 
 void AboutBox(not_null<Ui::GenericBox*> box) {
-	box->setTitle(u"Telegram Desktop"_q);
+	box->setTitle(rpl::single(AppName.utf16()));
 
 	auto layout = box->verticalLayout();
 
@@ -114,6 +148,8 @@ void AboutBox(not_null<Ui::GenericBox*> box) {
 		}
 	});
 
+	Ui::AddSkip(layout, st::aboutTopSkip);
+	AddLogo(layout);
 	Ui::AddSkip(layout, st::aboutTopSkip);
 
 	const auto addText = [&](rpl::producer<TextWithEntities> text) {
@@ -180,11 +216,13 @@ namespace {
 } // namespace
 
 QString currentVersionText() {
-	return CurrentVersionText(true);
+	return QString::fromLatin1(Moligram::kVersion)
+		+ u" \u00B7 Telegram "_q
+		+ CurrentVersionText(false);
 }
 
 QString currentVersionShortText() {
-	return CurrentVersionText(false);
+	return QString::fromLatin1(Moligram::kVersion);
 }
 
 void ArchiveHintBox(

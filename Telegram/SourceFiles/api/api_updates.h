@@ -215,6 +215,8 @@ private:
 	base::Timer _idleFinishTimer;
 	crl::time _lastSetOnline = 0;
 	bool _lastWasOnline = false;
+	bool _offlineSent = false;
+	base::Timer _ghostOfflineTimer;
 	rpl::variable<bool> _isIdle = false;
 
 	rpl::lifetime _lifetime;

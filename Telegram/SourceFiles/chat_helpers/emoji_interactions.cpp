@@ -13,6 +13,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_element.h"
 #include "history/view/media/history_view_sticker.h"
 #include "main/main_session.h"
+#include "moligram/moligram_settings.h"
 #include "data/data_session.h"
 #include "data/data_changes.h"
 #include "data/data_peer.h"
@@ -319,6 +320,9 @@ void EmojiInteractions::sendAccumulatedOutgoing(
 		return;
 	}
 	const auto peer = item->history()->peer;
+	if (!Moligram::SendsTyping(peer->id)) {
+		return;
+	}
 	const auto emoji = from->emoji;
 	const auto requestId = _session->api().request(MTPmessages_SetTyping(
 		MTP_flags(0),
@@ -475,6 +479,8 @@ void EmojiInteractions::playStarted(not_null<PeerData*> peer, QString emoji) {
 	const auto i = map.find(emoji);
 	const auto now = crl::now();
 	if (i != end(map) && now - i->second < kAccumulateSeenRequests) {
+		return;
+	} else if (!Moligram::SendsReads(peer->id)) {
 		return;
 	}
 	_session->api().request(MTPmessages_SetTyping(

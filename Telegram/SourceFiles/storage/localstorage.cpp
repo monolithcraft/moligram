@@ -1076,6 +1076,17 @@ Window::Theme::Saved readThemeUsingKey(FileKey key) {
 
 std::optional<QString> InitialLoadThemeUsingKey(FileKey key) {
 	auto read = readThemeUsingKey(key);
+	if (read.object.pathAbsolute == u":/gui/night.tdesktop-theme"_q
+		|| read.object.pathAbsolute == Window::Theme::NightThemePath()) {
+		auto file = QFile(Window::Theme::NightThemePath());
+		if (file.open(QIODevice::ReadOnly)) {
+			read.object.pathAbsolute
+				= read.object.pathRelative
+				= Window::Theme::NightThemePath();
+			read.object.content = file.readAll();
+			read.cache = Window::Theme::Cached();
+		}
+	}
 	const auto result = read.object.pathAbsolute;
 	if (read.object.content.isEmpty()) {
 		DEBUG_LOG(("Theme: Could not read content for key: %1").arg(key));
@@ -1233,8 +1244,7 @@ void InitialLoadTheme() {
 }
 
 bool ApplyDefaultNightMode() {
-	const auto NightByDefault = Platform::IsMacStoreBuild();
-	if (!NightByDefault
+	if (false
 		|| Window::Theme::IsNightMode()
 		|| _themeKeyDay
 		|| _themeKeyNight

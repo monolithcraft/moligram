@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/unixtime.h"
 #include "data/data_peer_values.h"
 #include "apiwrap.h"
+#include "moligram/moligram_settings.h"
 
 namespace Api {
 namespace {
@@ -152,6 +153,24 @@ void SendProgressManager::send(const Key &key, int progress) {
 }
 
 bool SendProgressManager::skipRequest(const Key &key) const {
+	using Type = SendProgressType;
+	const auto uploading = (key.type == Type::UploadPhoto)
+		|| (key.type == Type::UploadVideo)
+		|| (key.type == Type::UploadVoice)
+		|| (key.type == Type::UploadRound)
+		|| (key.type == Type::UploadFile);
+	if (key.type != Type::Speaking) {
+		const auto peer = key.history->peer->id;
+		const auto allowed = Moligram::InList(
+			Moligram::PeerList::GhostExceptions,
+			peer)
+			|| (uploading
+				? Moligram::Enabled(Moligram::Option::SendUploadProgress)
+				: Moligram::SendsTyping(peer));
+		if (!allowed) {
+			return true;
+		}
+	}
 	const auto user = key.history->peer->asUser();
 	if (!user) {
 		return false;

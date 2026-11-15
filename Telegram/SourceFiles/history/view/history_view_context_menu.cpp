@@ -38,6 +38,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/info_memento.h"
 #include "iv/editor/iv_editor_session.h"
 #include "iv/iv_rich_message_html_export.h"
+#include "moligram/moligram_menu.h"
 #include "ui/effects/ripple_animation.h"
 #include "ui/widgets/popup_menu.h"
 #include "ui/widgets/menu/menu_action.h"
@@ -1322,6 +1323,10 @@ bool AddSelectMessageAction(
 	const auto owner = &item->history()->owner();
 	const auto itemId = item->fullId();
 	const auto asGroup = (request.pointState != PointState::GroupPart);
+	Moligram::AddMessageMenuActions(
+		menu,
+		item,
+		list->controller());
 	menu->addAction(tr::lng_context_select_msg(tr::now), [=] {
 		if (const auto item = owner->message(itemId)) {
 			if (asGroup) {

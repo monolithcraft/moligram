@@ -151,6 +151,8 @@ aboutVersionLink: LinkButton(defaultLinkButton) {
 	overColor: windowSubTextFg;
 }
 aboutTopSkip: 19px;
+aboutLogoSize: 76px;
+aboutLogoGlow: 14px;
 aboutSkip: 14px;
 aboutLabel: FlatLabel(defaultFlatLabel) {
 	minWidth: 300px;

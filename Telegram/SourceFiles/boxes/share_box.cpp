@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "boxes/share_box.h"
 
+#include "moligram/moligram_settings.h"
+
 #include "api/api_premium.h"
 #include "base/call_delayed.h"
 #include "base/random.h"
@@ -232,6 +234,8 @@ ShareBox::ShareBox(QWidget*, Descriptor &&descriptor)
 	? std::move(_descriptor.copyLinkText)
 	: tr::lng_share_copy_link())
 , _searchTimer([=] { searchByUsername(); }) {
+	_forwardOptions.dropNames = Moligram::Enabled(
+		Moligram::Option::ForwardNoAuthor);
 	if (_bottomWidget) {
 		_bottomWidget->setParent(this);
 		_bottomWidget->resizeToWidth(st::boxWideWidth);

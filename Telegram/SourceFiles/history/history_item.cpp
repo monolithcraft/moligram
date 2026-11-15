@@ -24,6 +24,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "iv/editor/iv_editor_session.h"
 #include "iv/editor/iv_editor_page_blocks.h"
 #include "iv/iv_rich_page.h"
+#include "moligram/moligram_history.h"
+#include "moligram/moligram_settings.h"
 #include "mtproto/mtproto_config.h"
 #include "ui/controls/ton_common.h"
 #include "ui/text/format_values.h"
@@ -1056,6 +1058,7 @@ HistoryItem::HistoryItem(
 }
 
 HistoryItem::~HistoryItem() {
+	Moligram::Forget(this);
 	_media = nullptr;
 	clearSavedMedia();
 	if (const auto reply = Get<HistoryMessageReply>()) {
@@ -2444,6 +2447,7 @@ void HistoryItem::applyEdition(HistoryMessageEdition &&edition) {
 	if (_isServiceMessage) {
 		return;
 	}
+	Moligram::RememberRevision(this, edition.textWithEntities);
 	history()->session().ephemeralMessages().revertAnchored(this);
 
 	int keyboardTop = -1;
@@ -4770,6 +4774,12 @@ void HistoryItem::detectTextLinks(
 
 void HistoryItem::setText(TextWithEntities textWithEntities) {
 	detectTextLinks(textWithEntities);
+	if (!out() && Moligram::Filtered(textWithEntities.text)) {
+		textWithEntities.entities.push_front(EntityInText(
+			EntityType::Spoiler,
+			0,
+			int(textWithEntities.text.size())));
+	}
 	setTextValue((_media && _media->consumeMessageText(textWithEntities))
 		? TextWithEntities()
 		: std::move(textWithEntities));

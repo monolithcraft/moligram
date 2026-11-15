@@ -18,6 +18,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_unread_things.h"
 #include "base/random.h"
 #include "boxes/compose_ai_box.h"
+#include "moligram/moligram_menu.h"
+#include "moligram/moligram_motion.h"
 #include "ui/boxes/confirm_box.h"
 #include "boxes/delete_messages_box.h"
 #include "boxes/send_credits_box.h"
@@ -3405,6 +3407,9 @@ void HistoryWidget::showHistory(
 	}
 
 	_cornerButtons.clearReplyReturns();
+	if (_history && peerId) {
+		Moligram::CrossFade(this);
+	}
 	if (_history) {
 		if (Ui::InFocusChain(this)) {
 			// Removing focus from list clears selected and updates top bar.
@@ -10388,6 +10393,16 @@ bool HistoryWidget::sendExistingDocument(
 		}
 	}
 
+	const auto confirmed = Moligram::ConfirmDocumentSending(
+		controller()->uiShow(),
+		document,
+		[=] {
+			auto copy = messageToSend;
+			Api::SendExistingDocument(std::move(copy), document, localId);
+		});
+	if (confirmed) {
+		return true;
+	}
 	Api::SendExistingDocument(
 		std::move(messageToSend),
 		document,

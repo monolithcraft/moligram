@@ -52,6 +52,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_business.h"
 #include "settings/sections/settings_calls.h"
 #include "settings/sections/settings_chat.h"
+#include "settings/sections/settings_moligram.h"
+#include "moligram/moligram_card.h"
 #include "settings/settings_codes.h"
 #include "settings/settings_faq_suggestions.h"
 #include "settings/sections/settings_credits.h"
@@ -365,6 +367,19 @@ void BuildSectionButtons(SectionBuilder &builder) {
 	const auto session = builder.session();
 	const auto controller = builder.controller();
 	const auto showOther = builder.showOther();
+
+	builder.addControl({
+		.factory = [=](not_null<Ui::VerticalLayout*> container) {
+			auto card = object_ptr<Moligram::SettingsCard>(container);
+			card->setClickedCallback([=] { showOther(MoligramId()); });
+			return card;
+		},
+		.id = u"main/moligram"_q,
+		.title = tr::lng_moligram_settings(),
+		.keywords = { u"ghost"_q, u"moligram"_q, u"deleted"_q, u"streamer"_q },
+		.searchIcon = { &st::menuIconStealth },
+	});
+	builder.addSkip();
 
 	if (!session->supportMode()) {
 		builder.addButton({

@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "mainwidget.h"
 
+#include "moligram/moligram_motion.h"
+#include "moligram/moligram_settings.h"
+
 #include "api/api_updates.h"
 #include "api/api_views.h"
 #include "data/components/scheduled_messages.h"
@@ -606,6 +609,10 @@ bool MainWidget::setForwardDraft(
 		return false;
 	}
 
+	if (draft.options == Data::ForwardOptions::PreserveInfo
+		&& Moligram::Enabled(Moligram::Option::ForwardNoAuthor)) {
+		draft.options = Data::ForwardOptions::NoSenderNames;
+	}
 	history->setForwardDraft(topicRootId, monoforumPeerId, std::move(draft));
 	_controller->showThread(
 		thread,
@@ -2109,6 +2116,7 @@ void MainWidget::showNewSection(
 	auto &settingSection = newThirdSection
 		? _thirdSection
 		: _mainSection;
+	auto transition = Fn<void(not_null<QWidget*>)>();
 	if (newThirdSection) {
 		_thirdSection = std::move(newThirdSection);
 		_thirdSection->removeRequests(
@@ -2124,6 +2132,13 @@ void MainWidget::showNewSection(
 		}
 		updateControlsGeometry();
 	} else {
+		if (!animationParams && !fromBottom) {
+			if (_mainSection && !_mainSection->isHidden()) {
+				transition = Moligram::BeginTransition(_mainSection.data());
+			} else if (!_history->isHidden()) {
+				transition = Moligram::BeginTransition(_history.get());
+			}
+		}
 		_mainSection = std::move(newMainSection);
 		_history->finishAnimating();
 		_history->showHistory(PeerId(), MsgId());
@@ -2156,6 +2171,10 @@ void MainWidget::showNewSection(
 		settingSection->showAnimated(direction, animationParams);
 	} else {
 		settingSection->showFast();
+		if (transition && _mainSection) {
+			orderWidgets();
+			transition(_mainSection.data());
+		}
 	}
 
 	floatPlayerCheckVisibility();

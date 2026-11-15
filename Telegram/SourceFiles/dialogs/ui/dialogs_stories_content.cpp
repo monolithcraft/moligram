@@ -24,6 +24,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "media/stories/media_stories_stealth.h"
 #include "lang/lang_keys.h"
+#include "moligram/moligram_settings.h"
 #include "ui/dynamic_image.h"
 #include "ui/dynamic_thumbnails.h"
 #include "ui/painter.h"
@@ -100,10 +101,13 @@ rpl::producer<Content> ContentForSession(
 		const auto state = result.make_state<State>(stories, list);
 		rpl::single(
 			rpl::empty
-		) | rpl::then(
-			stories->sourcesChanged(list)
-		) | rpl::on_next([=] {
-			consumer.put_next(state->next());
+		) | rpl::then(rpl::merge(
+			stories->sourcesChanged(list),
+			Moligram::Value(Moligram::Option::HideStories) | rpl::to_empty
+		)) | rpl::on_next([=] {
+			consumer.put_next(Moligram::Enabled(Moligram::Option::HideStories)
+				? Content()
+				: state->next());
 		}, result);
 		return result;
 	};

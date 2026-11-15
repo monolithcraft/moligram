@@ -374,13 +374,13 @@ std::vector<EmbeddedScheme> EmbeddedThemes() {
 		},
 		EmbeddedScheme{
 			EmbeddedType::Night,
-			qColor("485761"),
-			qColor("5ca7d4"),
-			qColor("6b808d"),
-			qColor("6b808d"),
-			qColor("5ca7d4"),
-			name(tr::lng_settings_theme_tinted),
-			":/gui/night.tdesktop-theme",
+			qColor("0d0d10"),
+			qColor("2a2a33"),
+			qColor("1d1d23"),
+			qColor("45454e"),
+			qColor("5288c1"),
+			name(tr::lng_moligram_theme),
+			":/gui/moligram.tdesktop-theme",
 			qColor("5288c1")
 		},
 		EmbeddedScheme{

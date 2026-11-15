@@ -75,6 +75,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "main/main_session.h"
 #include "menu/menu_mute.h"
+#include "moligram/moligram_menu.h"
+#include "moligram/moligram_club.h"
+#include "moligram/moligram_people.h"
+#include "moligram/moligram_settings.h"
 #include "settings/settings_common.h"
 #include "support/support_helper.h"
 #include "ui/boxes/peer_qr_box.h"
@@ -1307,6 +1311,8 @@ private:
 	void addFastButtonsMode(not_null<UserData*> user);
 	void addReportAction();
 	void addBlockAction(not_null<UserData*> user);
+	void addOnlineAlertAction(not_null<UserData*> user);
+	void addLocalNameAction(not_null<UserData*> user);
 	void addLeaveChannelAction(not_null<ChannelData*> channel);
 	void addJoinChannelAction(not_null<ChannelData*> channel);
 	void fillUserActions(not_null<UserData*> user);
@@ -1898,6 +1904,17 @@ Section DetailsFiller::makeInfo() {
 			setupAboutContextMenu(about.text, AboutWithAdvancedValue(_peer));
 			SetupAboutPeerIdDrag(about.text, _peer);
 		}
+	}
+	if (!_topic) {
+		const auto id = Moligram::PeerIdText(_peer);
+		addInfoOneLine(
+			tr::lng_moligram_peer_id(),
+			Moligram::Value(
+				Moligram::Option::ShowPeerIds
+			) | rpl::map([=](bool shown) {
+				return shown ? TextWithEntities{ id } : TextWithEntities();
+			}),
+			id);
 	}
 	raw->toggleOn(tracker.atLeastOneShownValue());
 	raw->finishAnimating();
@@ -2777,6 +2794,46 @@ void DetailsFiller::buildSections() {
 	Expects(!_topic || !_topic->creating());
 
 	if (const auto user = _sublist ? nullptr : _peer->asUser()) {
+		const auto parent = _stack->layout();
+		auto cards = Moligram::ClubCardValue(
+			user
+		) | rpl::start_spawning(parent->lifetime());
+		auto club = object_ptr<Ui::SlideWrap<Moligram::ClubLine>>(
+			parent,
+			object_ptr<Moligram::ClubLine>(
+				parent,
+				rpl::duplicate(cards) | rpl::filter([](const auto &card) {
+					return card.has_value();
+				}) | rpl::map([](const auto &card) {
+					return *card;
+				}),
+				user->isSelf()));
+		const auto clubRaw = club.data();
+		clubRaw->hide(anim::type::instant);
+		clubRaw->toggleOn(rpl::duplicate(cards) | rpl::map([](const auto &card) {
+			return card.has_value();
+		}));
+		_stack->add(Section{
+			.widget = std::move(club),
+			.shown = clubRaw->toggledValue(),
+		});
+		auto notes = Moligram::NoteValue(
+			user->id
+		) | rpl::start_spawning(parent->lifetime());
+		auto note = object_ptr<Ui::SlideWrap<Moligram::NoteCard>>(
+			parent,
+			object_ptr<Moligram::NoteCard>(parent, rpl::duplicate(notes)));
+		const auto noteRaw = note.data();
+		noteRaw->hide(anim::type::instant);
+		noteRaw->toggleOn(rpl::duplicate(notes) | rpl::map([](const QString &text) {
+			return !text.isEmpty();
+		}));
+		_stack->add(Section{
+			.widget = std::move(note),
+			.shown = noteRaw->toggledValue(),
+		});
+	}
+	if (const auto user = _sublist ? nullptr : _peer->asUser()) {
 		_stack->add(makePersonalChannel(user));
 		_stack->addPlainSeparator();
 	}
@@ -3116,6 +3173,48 @@ void ActionsFiller::addReportAction() {
 		st::infoBlockButton);
 }
 
+void ActionsFiller::addOnlineAlertAction(not_null<UserData*> user) {
+	using Moligram::PeerList;
+	const auto id = user->id;
+	const auto show = _controller->parentController()->uiShow();
+	auto text = rpl::single(
+		rpl::empty
+	) | rpl::then(
+		Moligram::Changes()
+	) | rpl::map([=] {
+		return Moligram::InList(PeerList::OnlineAlerts, id);
+	}) | rpl::distinct_until_changed(
+	) | rpl::map([](bool watched) {
+		return watched
+			? tr::lng_moligram_online_alert_off()
+			: tr::lng_moligram_online_alert_on();
+	}) | rpl::flatten_latest();
+	AddActionButton(
+		_wrap,
+		std::move(text),
+		rpl::single(true),
+		[=] {
+			const auto watched = Moligram::InList(PeerList::OnlineAlerts, id);
+			Moligram::SetInList(PeerList::OnlineAlerts, id, !watched);
+			show->showToast(watched
+				? tr::lng_moligram_online_alert_disabled(tr::now)
+				: tr::lng_moligram_online_alert_enabled(tr::now));
+		},
+		&st::infoIconOnlineAlert,
+		st::infoSharedMediaButton);
+}
+
+void ActionsFiller::addLocalNameAction(not_null<UserData*> user) {
+	const auto controller = _controller->parentController();
+	AddActionButton(
+		_wrap,
+		tr::lng_moligram_local_title(),
+		rpl::single(true),
+		[=] { controller->show(Box(Moligram::LocalNameBox, user)); },
+		&st::infoIconLocalName,
+		st::infoSharedMediaButton);
+}
+
 void ActionsFiller::addBlockAction(not_null<UserData*> user) {
 	const auto controller = _controller->parentController();
 	const auto window = &controller->window();
@@ -3222,6 +3321,10 @@ void ActionsFiller::fillUserActions(not_null<UserData*> user) {
 		addBotCommandActions(user);
 		_wrap->add(CreateSkipWidget(_wrap, st::infoBlockButtonSkip));
 		addReportAction();
+	}
+	if (!user->isSelf() && !user->isBot()) {
+		addOnlineAlertAction(user);
+		addLocalNameAction(user);
 	}
 	if (!user->isSelf() && !user->isSupport() && !user->isVerifyCodes()) {
 		addBlockAction(user);

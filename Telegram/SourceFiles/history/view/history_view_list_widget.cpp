@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history.h"
 #include "history/history_item.h"
 #include "history/history_item_components.h"
+#include "moligram/moligram_hover.h"
 #include "history/history_item_helpers.h"
 #include "history/history_item_text.h"
 #include "history/history_streamed_drafts.h"
@@ -5056,6 +5057,7 @@ void ListWidget::leaveEventHook(QEvent *e) {
 			_overState.pointState = PointState::Outside;
 		}
 	}
+	Moligram::HoverUserpic(controller(), nullptr, QRect());
 	ClickHandler::clearActive();
 	Ui::Tooltip::Hide();
 	if (!ClickHandler::getPressed() && _cursor != style::cur_default) {
@@ -5628,6 +5630,8 @@ void ListWidget::mouseActionUpdate() {
 		&& (_overState.itemId == _pressState.itemId)
 		&& hasSelectedText();
 	auto dragStateUserpicItemId = FullMsgId();
+	PeerData *hoverPeer = nullptr;
+	auto hoverRect = QRect();
 	const auto overReplyBtn = replyBtnView && replyBtnState.link;
 	const auto overReaction = reactionView && reactionState.link;
 	if (overReaction) {
@@ -5782,6 +5786,13 @@ void ListWidget::mouseActionUpdate() {
 							dragState = TextState(nullptr, view->fromPhotoLink());
 							dragState.cursor = CursorState::FromPhoto;
 							dragStateUserpicItemId = view->data()->fullId();
+							hoverPeer = view->data()->displayFrom();
+							hoverRect = QRect(
+								mapToGlobal(QPoint(
+									point.x() - itemPoint.x()
+										+ st::historyPhotoLeft,
+									userpicTop)),
+								QSize(st::msgPhotoSize, st::msgPhotoSize));
 							_overItemExact = nullptr;
 							lnkhost = view;
 							return false;
@@ -5794,6 +5805,7 @@ void ListWidget::mouseActionUpdate() {
 	}
 	const auto lnkChanged = ClickHandler::setActive(dragState.link, lnkhost);
 	_overSenderUserpicItemId = dragStateUserpicItemId;
+	Moligram::HoverUserpic(controller(), hoverPeer, hoverRect);
 	if (lnkChanged || dragState.cursor != _mouseCursorState) {
 		Ui::Tooltip::Hide();
 	}

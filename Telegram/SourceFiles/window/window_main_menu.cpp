@@ -28,6 +28,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_user.h"
 #include "info/info_memento.h"
 #include "info/profile/info_profile_badge.h"
+#include "moligram/moligram_quick_panel.h"
+#include "moligram/moligram_settings.h"
+#include "settings/sections/settings_moligram.h"
 #include "settings/settings_common.h"
 #include "info/profile/info_profile_emoji_status_panel.h"
 #include "info/profile/info_profile_icon.h"
@@ -86,6 +89,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Window {
 namespace {
+
+constexpr auto kCoverRevealDuration = crl::time(1100);
 
 constexpr auto kPlayStatusLimit = 2;
 
@@ -388,8 +393,8 @@ MainMenu::MainMenu(
 	parentResized();
 
 	_telegram->setMarkedText(tr::link(
-		u"Telegram Desktop"_q,
-		u"https://desktop.telegram.org"_q));
+		u"Moligram"_q,
+		u"https://github.com/monolithcraft/moligram"_q));
 	_telegram->setLinksTrusted();
 	// The canary version is too long for the "Version {version}" form.
 	_version->setMarkedText(
@@ -445,7 +450,10 @@ MainMenu::MainMenu(
 			snowRaw->paintRequest(
 			) | rpl::on_next([=](const QRect &r) {
 				auto p = Painter(snowRaw);
-				p.fillRect(r, st::mainMenuBg);
+				_cover.paint(
+					p,
+					QRect(0, 0, width(), st::mainMenuCoverHeight),
+					_coverReveal.value(1.));
 				drawName(p);
 				snow->paint(p, snowRaw->rect());
 			}, snowRaw->lifetime());
@@ -644,6 +652,9 @@ void MainMenu::parentResized() {
 
 void MainMenu::showFinished() {
 	_showFinished = true;
+	_coverReveal.start([=] {
+		update(0, 0, width(), st::mainMenuCoverHeight);
+	}, 0., 1., kCoverRevealDuration, anim::easeOutCubic);
 
 	_controller->checkHighlightControl(
 		u"main-menu/emoji-status"_q,
@@ -668,6 +679,15 @@ void MainMenu::setupMenu() {
 			std::move(descriptor));
 	};
 	if (!_controller->session().supportMode()) {
+		const auto quick = _menu->add(
+			object_ptr<Ui::SlideWrap<Moligram::QuickPanel>>(
+				_menu,
+				object_ptr<Moligram::QuickPanel>(_menu, [=] {
+					controller->showSettings(Settings::MoligramId());
+				})));
+		quick->toggleOn(Moligram::Value(Moligram::Option::QuickPanel));
+		quick->finishAnimating();
+
 		_menu->add(
 			CreateButtonWithIcon(
 				_menu,
@@ -812,6 +832,24 @@ void MainMenu::setupMenu() {
 			_nightThemeSwitches.fire_copy(*darkMode);
 		}
 	}, _nightThemeToggle->lifetime());
+
+	const auto ghost = _menu->add(
+		object_ptr<Ui::SlideWrap<Ui::SettingsButton>>(
+			_menu,
+			CreateButtonWithIcon(
+				_menu,
+				tr::lng_moligram_ghost_toggle(),
+				st::mainMenuButton,
+				{ &st::menuIconStealth })));
+	ghost->toggleOn(Moligram::Value(Moligram::Option::GhostInMainMenu));
+	ghost->finishAnimating();
+	ghost->entity()->toggleOn(Moligram::GhostModeValue());
+	ghost->entity()->toggledChanges(
+	) | rpl::filter([](bool enabled) {
+		return (enabled != Moligram::GhostMode());
+	}) | rpl::on_next([](bool enabled) {
+		Moligram::SetGhostMode(enabled);
+	}, ghost->lifetime());
 }
 
 void MainMenu::resizeEvent(QResizeEvent *e) {
@@ -905,6 +943,7 @@ void MainMenu::paintEvent(QPaintEvent *e) {
 
 	p.fillRect(clip, st::mainMenuBg);
 	if (cover.intersects(clip)) {
+		_cover.paint(p, cover, _coverReveal.value(1.));
 		drawName(p);
 	}
 }

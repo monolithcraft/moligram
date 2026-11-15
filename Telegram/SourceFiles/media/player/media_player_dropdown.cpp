@@ -41,7 +41,7 @@ constexpr auto kSpeedBoostSettle = crl::time(120);
 }
 
 constexpr auto kSpeedStickedValues
-	= std::array<std::pair<float64, float64>, 7>{{
+	= std::array<std::pair<float64, float64>, 9>{{
 		{ 0.8, 0.05 },
 		{ 1.0, 0.05 },
 		{ 1.2, 0.05 },
@@ -49,6 +49,8 @@ constexpr auto kSpeedStickedValues
 		{ 1.7, 0.05 },
 		{ 2.0, 0.05 },
 		{ 2.2, 0.05 },
+		{ 2.5, 0.05 },
+		{ 3.0, 0.05 },
 	}};
 
 class SpeedSliderItem final : public Ui::Menu::ItemBase {

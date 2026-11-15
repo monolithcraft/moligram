@@ -758,6 +758,39 @@ void Instance::updatePluralRules() {
 			: LanguageIdOrDefault(_id);
 	}
 	UpdatePluralRules(_pluralId);
+	applyMoligramValues();
+}
+
+void Instance::applyMoligramValues() {
+	if (_derived) {
+		return;
+	}
+	const auto code = [&] {
+		const auto base = _base ? _base->id() : QString();
+		const auto id = LanguageIdOrDefault(_id);
+		return (id.startsWith(u"ru"_q) || base.startsWith(u"ru"_q))
+			? u"ru"_q
+			: QString();
+	}();
+	if (code.isEmpty()) {
+		return;
+	}
+	auto file = QFile(u":/gui/langs/moligram_"_q + code + u".strings"_q);
+	if (!file.open(QIODevice::ReadOnly)) {
+		return;
+	}
+	const auto parser = Lang::FileParser(
+		file.readAll(),
+		[&](QLatin1String key, const QByteArray &value) {
+			ParseKeyValue(
+				QByteArray(key.data(), key.size()),
+				value,
+				[&](ushort index, QString &&parsed) {
+					if (!_nonDefaultSet[index]) {
+						_values[index] = std::move(parsed);
+					}
+				});
+		});
 }
 
 void Instance::resetValue(const QByteArray &key) {

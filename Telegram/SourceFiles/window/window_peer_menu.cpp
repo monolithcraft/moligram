@@ -16,6 +16,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/compose/compose_show.h"
 #include "chat_helpers/message_field.h"
 #include "chat_helpers/share_message_phrase_factory.h"
+#include "moligram/moligram_menu.h"
+#include "moligram/moligram_settings.h"
 #include "ui/basic_click_handlers.h"
 #include "ui/controls/userpic_button.h"
 #include "ui/wrap/slide_wrap.h"
@@ -738,6 +740,14 @@ void Filler::addToggleUnreadMark() {
 			peer->owner().histories().changeDialogUnreadMark(history, true);
 		}
 	}, (unread ? &st::menuIconMarkRead : &st::menuIconMarkUnread));
+
+	if (history
+		&& !_thread->asTopic()
+		&& !Moligram::Enabled(Moligram::Option::SendReadMessages)) {
+		_addAction(tr::lng_moligram_read_on_server(tr::now), [=] {
+			history->owner().histories().readInboxOnServer(history);
+		}, &st::menuIconMarkRead);
+	}
 }
 
 void Filler::addNewWindow(bool addSeparator) {
@@ -1923,6 +1933,7 @@ void Filler::fillContextMenuActions() {
 	addToggleUnreadMark();
 	addToggleTopicClosed();
 	addToggleFolder();
+	Moligram::AddOnlineAlertAction(_controller, _peer, _addAction);
 	if (const auto user = _peer->asUser()) {
 		if (!user->isContact()) {
 			addBlockUser();
@@ -1954,6 +1965,9 @@ void Filler::fillHistoryActions() {
 	addTranslate();
 	addReport();
 	addClearHistory();
+	if (!_topic) {
+		Moligram::FillPeerMenu(_controller, _peer, _addAction);
+	}
 	addDeleteChat();
 	addLeaveChat();
 }
